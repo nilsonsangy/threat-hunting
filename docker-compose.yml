@@ -1,12 +1,11 @@
-# docker-compose do threat-hunting (R10.1, R12.1, R12.3)
+# docker-compose do laboratorio threat-hunting.
 #
-#   docker compose up               -> sobe APENAS o serviço `lab` (pandas/pytest)
-#   docker compose run --rm lab ...  -> executa um comando pontual no laboratório
-#   docker compose --profile opensearch up
-#                                   -> sobe tambem OpenSearch + Dashboards (OPCIONAL)
+#   docker compose up -d lab                  -> sobe o laboratorio (Python/pandas)
+#   docker compose run --rm lab ...            -> executa um comando no laboratorio
+#   docker compose --profile opensearch up -d  -> sobe tambem OpenSearch + Dashboards
 #
-# Os serviços OpenSearch ficam sob o profile `opensearch`: o `up` padrão NÃO os sobe,
-# e nenhum exercício/teste depende deles (R12.3).
+# Os servicos OpenSearch ficam sob o profile `opensearch`: o `up` padrao NAO os sobe,
+# e os exercicios/testes nao dependem deles.
 
 services:
   # Serviço padrão do laboratório (Python + pandas). Rode comandos com
@@ -22,7 +21,7 @@ services:
       - .:/lab
       # Volume anônimo preserva o .venv da imagem por cima do bind acima.
       - /lab/.venv
-    # Sem portas e sem rede externa: o caminho pandas é 100% offline (R10.4).
+    # Sem portas: o caminho pandas e offline.
     stdin_open: true
     tty: true
 
@@ -41,7 +40,7 @@ services:
       # Desabilita o security plugin para facilitar o acesso local de laboratório.
       - DISABLE_SECURITY_PLUGIN=true
       - DISABLE_INSTALL_DEMO_CONFIG=true
-      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx2g"
     ulimits:
       memlock:
         soft: -1
