@@ -1,0 +1,27 @@
+# Dataset do CERT baixado em data/ — nunca versionado (licença ExactData/CMU).
+# O codigo e os scripts sao versionados; os dados NAO.
+/data/*
+!/data/.gitkeep
+
+# Bytecode e cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.hypothesis/
+
+# Ambientes virtuais
+.venv/
+venv/
+
+# Build/empacotamento
+build/
+dist/
+*.egg-info/
+
+# Execução / saidas locais
+*.log
+.DS_Store

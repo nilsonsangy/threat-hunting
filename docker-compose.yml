@@ -1,0 +1,71 @@
+# docker-compose do threat-hunting (R10.1, R12.1, R12.3)
+#
+#   docker compose up               -> sobe APENAS o serviço `lab` (pandas/pytest)
+#   docker compose run --rm lab ...  -> executa um comando pontual no laboratório
+#   docker compose --profile opensearch up
+#                                   -> sobe tambem OpenSearch + Dashboards (OPCIONAL)
+#
+# Os serviços OpenSearch ficam sob o profile `opensearch`: o `up` padrão NÃO os sobe,
+# e nenhum exercício/teste depende deles (R12.3).
+
+services:
+  # Serviço padrão do laboratório (Python + pandas). Rode comandos com
+  # `docker compose run --rm lab ...`.
+  lab:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: threat-hunting-lab
+    working_dir: /lab
+    # Bind do repositório para desenvolvimento (edições locais refletem no container).
+    volumes:
+      - .:/lab
+      # Volume anônimo preserva o .venv da imagem por cima do bind acima.
+      - /lab/.venv
+    # Sem portas e sem rede externa: o caminho pandas é 100% offline (R10.4).
+    stdin_open: true
+    tty: true
+
+  # ---------------------------------------------------------------------------
+  # OPCIONAL — explore os CSVs visualmente. Só sobe com `--profile opensearch`.
+  # Configuração mínima de desenvolvimento (single-node, security plugin off).
+  # NÃO use em produção: segurança desabilitada por conveniência de laboratório.
+  # ---------------------------------------------------------------------------
+  opensearch:
+    profiles: ["opensearch"]
+    image: opensearchproject/opensearch:2.17.1
+    container_name: th-opensearch
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      # Desabilita o security plugin para facilitar o acesso local de laboratório.
+      - DISABLE_SECURITY_PLUGIN=true
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "9200:9200"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+
+  opensearch-dashboards:
+    profiles: ["opensearch"]
+    image: opensearchproject/opensearch-dashboards:2.17.1
+    container_name: th-opensearch-dashboards
+    environment:
+      - 'OPENSEARCH_HOSTS=["http://opensearch:9200"]'
+      # Dashboards também com o security plugin desabilitado (combina com o serviço acima).
+      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+    ports:
+      - "5601:5601"
+    depends_on:
+      - opensearch
+
+volumes:
+  opensearch-data:
